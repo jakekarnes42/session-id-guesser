@@ -83,15 +83,24 @@
   <!-- Formulas and Expected Guesses Section -->
   <div id="formulaSection">
     <h3>Expected Guesses:</h3>
-    <div class="formula-box">
-      <strong>Formula: </strong> <span id="formula"></span>
-      <br>
-      <strong>Values: </strong> B = <span id="BValue"></span>, S = <span id="SValue"></span>, A = <span
-        id="AValue">N/A</span>
-      <br>
-      <strong>Result: </strong> <span id="expectedGuesses">- guesses</span>
+    <div class="formula-container">
+      <div class="formula-row">
+        <strong>Formula: </strong>
+        <span id="formula" class="formula"></span>
+      </div>
+      <div class="formula-row">
+        <strong>Values: </strong>
+        <span>B = </span><span id="BValue" class="formula-value"></span>,
+        <span>S = </span><span id="SValue" class="formula-value"></span>,
+        <span>A = </span><span id="AValue" class="formula-value"></span>
+      </div>
+      <div class="formula-row">
+        <strong>Expected Guesses: </strong>
+        <span id="expectedGuesses" class="expected-result">- guesses</span>
+      </div>
     </div>
   </div>
+
 
   <!-- Simulation section -->
   <div id="simulationSection">
