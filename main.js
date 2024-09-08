@@ -160,6 +160,11 @@ function runSimulation() {
   runningSimulation = true;
   workerProgress = {}; // Reset progress tracking
 
+  // Reset the progress bar to green and set it to 0%
+  document.getElementById('progressBarFill').style.backgroundColor = '#4caf50';
+  document.getElementById('progressBarFill').style.width = '0%';
+  document.getElementById('progress').textContent = '0%';
+
   document.getElementById('runSimulation').textContent = 'Stop Simulation';
   document.getElementById('runSimulation').onclick = stopSimulation;
   document.getElementById('avgGuesses').textContent = '-';
@@ -267,6 +272,7 @@ function stopSimulation() {
   // Reset the UI
   document.getElementById('runSimulation').textContent = 'Run Simulation';
   document.getElementById('runSimulation').onclick = runSimulation;
+  document.getElementById('progressBarFill').style.backgroundColor = 'red';
   document.getElementById('progress').textContent = 'Simulation stopped.';
 }
 
