@@ -7,7 +7,12 @@
 function updateTotalIds() {
   const B = parseInt(document.getElementById('bits').value);
   const totalIds = Math.pow(2, B);
-  document.getElementById('totalIds').textContent = totalIds;
+  const totalIdsElement = document.getElementById('totalIds');
+  totalIdsElement.textContent = totalIds;
+  totalIdsElement.classList.add('updated');
+
+  setTimeout(() => totalIdsElement.classList.remove('updated'), 500); // Highlight change
+
   updateExpectedGuesses();
 }
 
@@ -34,6 +39,7 @@ function updateExpectedGuesses() {
   document.getElementById('BValue').textContent = B;
   document.getElementById('SValue').textContent = S;
   document.getElementById('AValue').textContent = A ? A : 'N/A';
+  document.getElementById('avgGuessesMeaning').textContent = expectedGuesses.toFixed(2);
 }
 
 /**
@@ -228,9 +234,11 @@ function runSimulation() {
 function updateProgress() {
   const avgGuesses = totalGuesses / completedTrials;
   document.getElementById('avgGuesses').textContent = avgGuesses.toFixed(2);
+  document.getElementById('avgGuessesMeaning').textContent = avgGuesses.toFixed(2);
 
   const percentComplete = Math.floor((completedTrials / totalTrials) * 100);
   document.getElementById('progress').textContent = `${percentComplete}%`;
+  document.getElementById('progressBarFill').style.width = `${percentComplete}%`;
 }
 
 function finalizeSimulation() {

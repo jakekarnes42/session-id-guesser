@@ -1,50 +1,76 @@
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
+body {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 
-    p {
-      display: block;
-      margin-bottom: 10px;
-    }
+p {
+  display: block;
+  margin-bottom: 10px;
+}
 
-    .radio-group {
-      margin-bottom: 20px;
-    }
+.radio-group {
+  margin-bottom: 20px;
+}
 
-    #results,
-    #formulaSection,
-    #simulationSection {
-      margin-top: 20px;
-    }
+#results,
+#formulaSection,
+#simulationSection {
+  margin-top: 20px;
+}
 
-    h3 {
-      margin-top: 30px;
-    }
+h3 {
+  margin-top: 30px;
+}
 
-    .input-explanation {
-      color: #555;
-      font-style: italic;
-      margin-top: 2px;
-      margin-bottom: 16px;
-    }
+.input-explanation {
+  color: #555;
+  font-style: italic;
+  margin-top: 2px;
+  margin-bottom: 16px;
+}
 
-    .formula-box {
-      font-family: monospace;
-      font-size: 1.2em;
-      padding: 10px;
-      background-color: #f0f0f0;
-      border-radius: 6px;
-      margin-top: 10px;
-      margin-bottom: 20px;
-    }
+.formula-box {
+  font-family: monospace;
+  font-size: 1.2em;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 6px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
 
-    .formula-box span {
-      font-weight: bold;
-      color: #333;
-    }
+.formula-box span {
+  font-weight: bold;
+  color: #333;
+}
+
+.section-box {
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+}
+
+#progressBar {
+  width: 100%;
+  background-color: #ddd;
+}
+
+#progressBarFill {
+  height: 20px;
+  width: 0%;
+  background-color: #4caf50;
+  transition: width 0.5s ease;
+}
+
+.updated {
+  background-color: #fffae6;
+  /* light yellow for updated elements */
+  transition: background-color 0.5s ease;
+}
