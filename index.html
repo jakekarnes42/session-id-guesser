@@ -1,101 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Session ID Guessing Simulator</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="humanize-duration.js"></script>
-    <script src="main.js"></script>
-  </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session ID Guessing Simulator</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="humanize-duration.js"></script>
+  <script src="main.js"></script>
+</head>
 
 
-  <body>
+<body>
 
-    <h1>Session ID Guessing Simulator</h1>
+  <h1>Session ID Guessing Simulator</h1>
 
-    <!-- Input section for B, S, and A -->
-    <div>
-      <label for="bits">Number of bits (B):</label>
-      <input type="number" id="bits" value="4" min="1" max="32">
-      <p class="input-explanation">The number of bits (B) defines the entropy in the session ID space. It represents how many possible session IDs exist (2^B). More bits increase the difficulty of guessing.</p>
-      <p>The total number of possible session IDs is: <code id="totalIds">16</code></p>
-      <br />
+  <!-- Input section for B, S, and A -->
+  <div>
+    <label for="bits">Number of bits (B):</label>
+    <input type="number" id="bits" value="4" min="1" max="32">
+    <p class="input-explanation">The number of bits (B) defines the entropy in the session ID space. It represents how
+      many possible session IDs exist (2^B). More bits increase the difficulty of guessing.</p>
+    <p>The total number of possible session IDs is: <code id="totalIds">16</code></p>
+    <br />
 
-      <label for="sessions">Number of active sessions (S):</label>
-      <input type="number" id="sessions" value="2" min="1">
-      <p class="input-explanation">The number of active sessions (S) represents how many valid session IDs are currently in use. The attacker’s goal is to guess one of these valid IDs.</p>
-      <br />
+    <label for="sessions">Number of active sessions (S):</label>
+    <input type="number" id="sessions" value="2" min="1">
+    <p class="input-explanation">The number of active sessions (S) represents how many valid session IDs are currently
+      in use. The attacker’s goal is to guess one of these valid IDs.</p>
+    <br />
 
-      <label for="requests">Requests per second (A) <em>(optional)</em>:</label>
-      <input type="number" id="requests" placeholder="Leave blank if unknown" min="1">
-      <p class="input-explanation">The number of requests per second (A) is how fast the attacker can make guesses. If provided, we will estimate how long it might take to guess a valid session ID.</p>
-    </div>
+    <label for="requests">Requests per second (A) <em>(optional)</em>:</label>
+    <input type="number" id="requests" placeholder="Leave blank if unknown" min="1">
+    <p class="input-explanation">The number of requests per second (A) is how fast the attacker can make guesses. If
+      provided, we will estimate how long it might take to guess a valid session ID.</p>
+  </div>
 
-    <!-- Session ID selection method -->
-    <div class="radio-group">
-      <p><strong>Session ID selection method:</strong></p>
+  <!-- Session ID selection method -->
+  <div class="radio-group">
+    <p><strong>Session ID selection method:</strong></p>
 
-      <input type="radio" id="dynamicSessions" name="sessionMethod" value="dynamic" checked>
-      <label for="dynamicSessions">Dynamic session IDs (valid IDs change on every guess)</label>
-      <p class="input-explanation">With "dynamic session IDs", a set of S targetted session ids are generated at the start of the attack. After each guess by the attacker, a new set of S targetted session ids is generated. This simulates short-lived session ids that are changing throughout the attack. This simulates S total users of the site, but those users are logging in and out, generating new session ids throughout the duration of the attack.</p>
+    <input type="radio" id="dynamicSessions" name="sessionMethod" value="dynamic" checked>
+    <label for="dynamicSessions">Dynamic session IDs (valid IDs change on every guess)</label>
+    <p class="input-explanation">With "dynamic session IDs", a set of S targetted session ids are generated at the start
+      of the attack. After each guess by the attacker, a new set of S targetted session ids is generated. This simulates
+      short-lived session ids that are changing throughout the attack. This simulates S total users of the site, but
+      those users are logging in and out, generating new session ids throughout the duration of the attack.</p>
 
-      <input type="radio" id="staticSessions" name="sessionMethod" value="static">
-      <label for="staticSessions">Static session IDs (valid IDs do not change throughout the attack)</label>
-      <p class="input-explanation">With "static session IDs", a set of S targetted session ids are generated at the start of the attack. The attacker must guess any one of these. This simulates very long-lived keys that an attacker is trying to guess, such as API keys that would not change throughout the duration of the attack.</p>
-
-
-    </div>
-
-    <!-- Guessing strategy -->
-    <div class="radio-group">
-      <p><strong>Guessing strategy:</strong></p>
-      <input type="radio" id="randomGuesses" name="guessStrategy" value="random" checked>
-      <label for="randomGuesses">Random guessing</label>
-      <p class="input-explanation" id="randomExplanation">Each guess is chosen randomly. This is a basic strategy and may lead to repeat guesses, especially in static mode.</p>
-
-      <input type="radio" id="incrementalGuesses" name="guessStrategy" value="increment">
-      <label for="incrementalGuesses">Incremental guessing</label>
-      <p class="input-explanation" id="incrementExplanation">In static mode, incremental guessing avoids repeats and improves efficiency compared to random guessing. It doesn't have an advantage in dynamic mode.</p>
-
-      <input type="radio" id="decrementalGuesses" name="guessStrategy" value="decrement">
-      <label for="decrementalGuesses">Decremental guessing</label>
-      <p class="input-explanation" id="decrementExplanation">Similar to incremental guessing, decremental guessing avoids repeats in static mode, making it more efficient than random guessing. It performs similarly in dynamic mode.</p>
-    </div>
+    <input type="radio" id="staticSessions" name="sessionMethod" value="static">
+    <label for="staticSessions">Static session IDs (valid IDs do not change throughout the attack)</label>
+    <p class="input-explanation">With "static session IDs", a set of S targetted session ids are generated at the start
+      of the attack. The attacker must guess any one of these. This simulates very long-lived keys that an attacker is
+      trying to guess, such as API keys that would not change throughout the duration of the attack.</p>
 
 
-    <!-- Formulas and Expected Guesses Section -->
-    <div id="formulaSection">
-      <h3>Expected Guesses:</h3>
-      <div class="formula-box">
-        <strong>Formula: </strong> <span id="formula"></span>
-        <br>
-        <strong>Values: </strong> B = <span id="BValue"></span>, S = <span id="SValue"></span>, A = <span id="AValue">N/A</span>
-        <br>
-        <strong>Result: </strong> <span id="expectedGuesses">- guesses</span>
-      </div>
-    </div>
+  </div>
 
-    <!-- Simulation section -->
-    <div id="simulationSection">
-      <h3>Run Simulation:</h3>
-      <label for="trials">Number of trials:</label>
-      <input type="number" id="trials" value="1000" min="100">
+  <!-- Guessing strategy -->
+  <div class="radio-group">
+    <p><strong>Guessing strategy:</strong></p>
+    <input type="radio" id="randomGuesses" name="guessStrategy" value="random" checked>
+    <label for="randomGuesses">Random guessing</label>
+    <p class="input-explanation" id="randomExplanation">Each guess is chosen randomly. This is a basic strategy and may
+      lead to repeat guesses, especially in static mode.</p>
+
+    <input type="radio" id="incrementalGuesses" name="guessStrategy" value="increment">
+    <label for="incrementalGuesses">Incremental guessing</label>
+    <p class="input-explanation" id="incrementExplanation">In static mode, incremental guessing avoids repeats and
+      improves efficiency compared to random guessing. It doesn't have an advantage in dynamic mode.</p>
+
+    <input type="radio" id="decrementalGuesses" name="guessStrategy" value="decrement">
+    <label for="decrementalGuesses">Decremental guessing</label>
+    <p class="input-explanation" id="decrementExplanation">Similar to incremental guessing, decremental guessing avoids
+      repeats in static mode, making it more efficient than random guessing. It performs similarly in dynamic mode.</p>
+  </div>
+
+
+  <!-- Formulas and Expected Guesses Section -->
+  <div id="formulaSection">
+    <h3>Expected Guesses:</h3>
+    <div class="formula-box">
+      <strong>Formula: </strong> <span id="formula"></span>
       <br>
-
-      <button id="runSimulation">Run Simulation</button>
-
-      <div id="results">
-        <h3>Simulation Results:</h3>
-        <p><strong>Average guesses until first success:</strong> <span id="avgGuesses">-</span></p>
-        <div id="timeResults" style="display: none;">
-          <p><strong>Average duration until first success:</strong> <span id="simTime">-</span></p>
-        </div>
-      </div>
+      <strong>Values: </strong> B = <span id="BValue"></span>, S = <span id="SValue"></span>, A = <span
+        id="AValue">N/A</span>
+      <br>
+      <strong>Result: </strong> <span id="expectedGuesses">- guesses</span>
     </div>
+  </div>
 
-  </body>
+  <!-- Simulation section -->
+  <div id="simulationSection">
+    <h3>Run Simulation:</h3>
+    <label for="trials">Number of trials:</label>
+    <input type="number" id="trials" value="10000" min="1000">
+    <br>
+
+    <button id="runSimulation">Run Simulation</button>
+
+    <div id="results">
+      <h3>Simulation Results:</h3>
+      <p><strong>Average guesses until first success:</strong> <span id="avgGuesses">-</span></p>
+      <div id="timeResults" style="display: none;">
+        <p><strong>Average duration until first success:</strong> <span id="simTime">-</span></p>
+      </div>
+      <p><strong>Progress:</strong> <span id="progress">0%</span></p>
+    </div>
+  </div>
+
+</body>
 
 
 </html>

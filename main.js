@@ -1,59 +1,3 @@
-// --- Utility Functions ---
-
-/**
- * Generates a random integer up to a given maximum value using crypto.
- * @param {number} max - The upper limit for the random integer.
- * @returns {number} - A random integer between 0 and max.
- */
-function getRandomInt(max) {
-  const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-  return array[0] % max;
-}
-
-/**
- * Generates a set of valid session IDs.
- * @param {number} S - The number of active sessions.
- * @param {number} totalPossibleIds - The total number of possible session IDs.
- * @returns {Set<number>} - A set containing unique valid session IDs.
- */
-function generateSessionIDs(S, totalPossibleIds) {
-  const validSessions = new Set();
-  while (validSessions.size < S) {
-    validSessions.add(getRandomInt(totalPossibleIds));
-  }
-  return validSessions;
-}
-
-/**
- * Returns a session ID guesser function based on the selected guessing strategy.
- * @param {string} guessStrategy - The guessing strategy ('random', 'increment', or 'decrement').
- * @param {number} totalPossibleIds - The total number of possible session IDs.
- * @returns {function} - A function that generates the next guess.
- */
-function getSessionIdGuesser(guessStrategy, totalPossibleIds) {
-  let guess = 0;
-
-  if (guessStrategy === 'random') {
-    return function () {
-      return getRandomInt(totalPossibleIds);
-    };
-  } else if (guessStrategy === 'increment') {
-    return function () {
-      const currentGuess = guess % totalPossibleIds;
-      guess++;
-      return currentGuess;
-    };
-  } else if (guessStrategy === 'decrement') {
-    let currentGuess = totalPossibleIds - 1;
-    return function () {
-      const guess = currentGuess;
-      currentGuess = (currentGuess - 1 + totalPossibleIds) % totalPossibleIds;
-      return guess;
-    };
-  }
-}
-
 // --- Event Handlers ---
 
 /**
@@ -83,7 +27,7 @@ function updateExpectedGuesses() {
 
   // Calculate expected guesses and update the formula
   const { expectedGuesses, formula } = calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, guessStrategy);
-  
+
   // Update the displayed formula and result
   document.getElementById('formula').textContent = formula;
   document.getElementById('expectedGuesses').textContent = formatExpectedGuesses(expectedGuesses, A);
@@ -171,10 +115,26 @@ function formatExpectedGuesses(expectedGuesses, A) {
 
 // --- Simulation Functions ---
 
-/**
- * Runs the session ID guessing simulation.
- */
+let workers = [];
+let workerProgress = {}; // Track progress per worker
+let runningSimulation = false;
+let totalTrials = 0;
+let completedTrials = 0;
+let totalGuesses = 0;
+let workersDone = 0;
+
+// Maximum number of trials to run per worker report
+const BATCH_SIZE = 1000;
+
 function runSimulation() {
+  if (runningSimulation) return; // Prevent multiple simulations from starting	
+
+  // Ensure no lingering workers from a previous simulation
+  if (workers.length > 0) {
+    workers.forEach(worker => worker.terminate()); // Terminate existing workers
+    workers = []; // Clear the workers array
+  }
+
   const B = parseInt(document.getElementById('bits').value);
   const S = parseInt(document.getElementById('sessions').value);
   const trials = parseInt(document.getElementById('trials').value);
@@ -183,58 +143,147 @@ function runSimulation() {
   const sessionMethod = document.querySelector('input[name="sessionMethod"]:checked').value;
   const totalPossibleIds = Math.pow(2, B);
 
-  const guessSessionId = getSessionIdGuesser(guessStrategy, totalPossibleIds);
-  let totalGuesses = 0;
+  const numWorkers = navigator.hardwareConcurrency || 4;
+  const trialsPerWorker = Math.floor(trials / numWorkers);
 
-  // Run the simulation for the specified number of trials
-  for (let trial = 0; trial < trials; trial++) {
-    let validSessions = generateSessionIDs(S, totalPossibleIds);
-    let guesses = 0;
+  // Reset global state
+  totalTrials = trials;
+  completedTrials = 0;
+  totalGuesses = 0;
+  workersDone = 0; // Reset workersDone for a new simulation
+  runningSimulation = true;
+  workerProgress = {}; // Reset progress tracking
 
-    // Guess until a valid session ID is found
-    while (true) {
-      guesses++;
-      const guess = guessSessionId();
-      if (validSessions.has(guess)) break;
+  document.getElementById('runSimulation').textContent = 'Stop Simulation';
+  document.getElementById('runSimulation').onclick = stopSimulation;
+  document.getElementById('avgGuesses').textContent = '-';
+  document.getElementById('simTime').textContent = '-';
+  document.getElementById('timeResults').style.display = 'none';
+  document.getElementById('progress').textContent = `0%`;
 
-      if (sessionMethod === 'dynamic') {
-        validSessions = generateSessionIDs(S, totalPossibleIds);
+  // Create workers
+  for (let i = 0; i < numWorkers; i++) {
+    const worker = new Worker('worker.js');
+    const workerId = `worker${i}`; // Unique ID for each worker
+
+    // Initialize progress for each worker
+    workerProgress[workerId] = {
+      completedTrials: 0,
+      totalGuesses: 0
+    };
+
+    // Send worker its data
+    worker.postMessage({
+      B,
+      S,
+      trials: i === numWorkers - 1 ? trialsPerWorker + (trials % numWorkers) : trialsPerWorker, // Ensure all trials are covered
+      A,
+      guessStrategy,
+      sessionMethod,
+      totalPossibleIds,
+      batchSize: BATCH_SIZE,
+    });
+
+    // Handle messages from worker
+    worker.onmessage = function (e) {
+      if (e.data.type === 'progress') {
+        // Update only the delta (difference since last report) for this worker
+        const deltaTrials = e.data.completedTrials - workerProgress[workerId].completedTrials;
+        const deltaGuesses = e.data.totalGuesses - workerProgress[workerId].totalGuesses;
+
+        completedTrials += deltaTrials;
+        totalGuesses += deltaGuesses;
+
+        // Update the worker's progress
+        workerProgress[workerId].completedTrials = e.data.completedTrials;
+        workerProgress[workerId].totalGuesses = e.data.totalGuesses;
+
+        updateProgress();
+
+      } else if (e.data.type === 'done') {
+        // Final message from the worker, process the last delta
+        const deltaTrials = e.data.completedTrials - workerProgress[workerId].completedTrials;
+        const deltaGuesses = e.data.totalGuesses - workerProgress[workerId].totalGuesses;
+
+        completedTrials += deltaTrials;
+        totalGuesses += deltaGuesses;
+
+        // Mark the worker as done
+        workersDone++;
+        stopWorker(worker);
+
+        // Check if all workers are done
+        if (workersDone === workers.length) {
+          finalizeSimulation(); // Finalize only when all workers are done
+        }
+
+        updateProgress();
       }
-    }
+    };
 
-    totalGuesses += guesses;
+    workers.push(worker);
   }
+}
 
-  // Calculate and display the average guesses
-  const avgGuesses = totalGuesses / trials;
+function updateProgress() {
+  const avgGuesses = totalGuesses / completedTrials;
   document.getElementById('avgGuesses').textContent = avgGuesses.toFixed(2);
 
-  // Calculate and display the time to first success if requests per second (A) is provided
+  const percentComplete = Math.floor((completedTrials / totalTrials) * 100);
+  document.getElementById('progress').textContent = `${percentComplete}%`;
+}
+
+function finalizeSimulation() {
+  console.log("finalizeSimulation");
+  runningSimulation = false;
+  document.getElementById('runSimulation').textContent = 'Run Simulation';
+  document.getElementById('runSimulation').onclick = runSimulation;
+
+  // Calculate time if requests per second (A) is provided
+  const A = document.getElementById('requests').value ? parseInt(document.getElementById('requests').value) : null;
   if (A) {
+    const avgGuesses = totalGuesses / completedTrials;
     const simTime = avgGuesses / A;
     const humanizedTime = humanizeDuration(simTime * 1000, { round: true });
     document.getElementById('simTime').textContent = `${simTime.toFixed(2)} seconds ≈ ${humanizedTime}`;
     document.getElementById('timeResults').style.display = 'block';
-  } else {
-    document.getElementById('timeResults').style.display = 'none';
   }
+}
+
+function stopSimulation() {
+  console.log("stopSimulation");
+  runningSimulation = false;
+  workers.forEach(worker => worker.terminate()); // Terminate all active workers
+  workers = []; // Clear the workers list
+
+  // Reset the UI
+  document.getElementById('runSimulation').textContent = 'Run Simulation';
+  document.getElementById('runSimulation').onclick = runSimulation;
+  document.getElementById('progress').textContent = 'Simulation stopped.';
+}
+
+function stopWorker(worker) {
+  worker.terminate(); // Properly terminate the worker
+  workers = workers.filter(w => w !== worker); // Remove the worker from the active list
 }
 
 // --- Initialization ---
 
 // Add event listeners to update values when inputs change
-document.getElementById('bits').addEventListener('input', updateTotalIds);
-document.getElementById('sessions').addEventListener('input', updateExpectedGuesses);
-document.getElementById('requests').addEventListener('input', updateExpectedGuesses);
-document.querySelectorAll('input[name="sessionMethod"]').forEach(radio => {
-  radio.addEventListener('change', updateExpectedGuesses);
-});
-document.querySelectorAll('input[name="guessStrategy"]').forEach(radio => {
-  radio.addEventListener('change', updateExpectedGuesses);
-});
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('bits').addEventListener('input', updateTotalIds);
+  document.getElementById('sessions').addEventListener('input', updateExpectedGuesses);
+  document.getElementById('requests').addEventListener('input', updateExpectedGuesses);
+  document.querySelectorAll('input[name="sessionMethod"]').forEach(radio => {
+    radio.addEventListener('change', updateExpectedGuesses);
+  });
+  document.querySelectorAll('input[name="guessStrategy"]').forEach(radio => {
+    radio.addEventListener('change', updateExpectedGuesses);
+  });
 
-// Add event listener for the simulation button
-document.getElementById('runSimulation').addEventListener('click', runSimulation);
+  // Set event listener for the simulation button
+  document.getElementById('runSimulation').onclick = runSimulation;
 
-// Initial update of total IDs on page load
-updateTotalIds();
+  // Initial update of total IDs on page load
+  updateTotalIds();
+});
