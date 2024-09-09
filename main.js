@@ -6,24 +6,52 @@
  */
 function updateTotalIds() {
   const B = parseInt(document.getElementById('bits').value);
-  const totalIds = Math.pow(2, B);
+  const totalIds = BigInt(2) ** BigInt(B); // Use BigInt for large B values
   const totalIdsElement = document.getElementById('totalIds');
-  totalIdsElement.textContent = totalIds;
+  totalIdsElement.textContent = totalIds.toString(); // Convert BigInt to string for display
   totalIdsElement.classList.add('updated');
+
+  // Handle error and disable simulation if B > 32
+  if (B > 32) {
+      document.getElementById('bitLimitError').style.display = 'block'; // Show error message
+      document.getElementById('runSimulation').disabled = true; // Disable the simulation button
+  } else {
+      document.getElementById('bitLimitError').style.display = 'none'; // Hide error message
+      document.getElementById('runSimulation').disabled = false; // Enable the simulation button
+  }
 
   setTimeout(() => totalIdsElement.classList.remove('updated'), 500); // Highlight change
 
   updateExpectedGuesses();
 }
 
+
+/**
+ * Updates the displayed expected number of guesses and dynamically adjusts guessing strategy explanations.
+ */
 /**
  * Updates the displayed expected number of guesses and dynamically adjusts guessing strategy explanations.
  */
 function updateExpectedGuesses() {
   const B = parseInt(document.getElementById('bits').value);
-  const S = parseInt(document.getElementById('sessions').value);
-  const A = document.getElementById('requests').value ? parseInt(document.getElementById('requests').value) : null;
-  const totalPossibleIds = Math.pow(2, B);
+  const totalPossibleIds = BigInt(2) ** BigInt(B); // Use BigInt for large B values
+
+  let S = BigInt(document.getElementById('sessions').value);
+
+  // Enforce S to be less than totalPossibleIds
+  if (S >= totalPossibleIds) {
+    S = totalPossibleIds - BigInt(1);
+    document.getElementById('sessions').value = S.toString(); // Update input value
+  }
+
+  let A = document.getElementById('requests').value ? parseInt(document.getElementById('requests').value) : null;
+
+  // Enforce A to be less than or equal to 100,000,000
+  if (A && A > 100000000) {
+    A = 100000000;
+    document.getElementById('requests').value = A; // Update input value
+  }
+
   const sessionMethod = document.querySelector('input[name="sessionMethod"]:checked').value;
   const guessStrategy = document.querySelector('input[name="guessStrategy"]:checked').value;
 
@@ -31,20 +59,26 @@ function updateExpectedGuesses() {
   updateStrategyExplanations(sessionMethod, guessStrategy);
 
   // Calculate expected guesses and update the formula
-  const { expectedGuesses, formula } = calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, guessStrategy);
+  const { expectedGuesses, formula } = calculateExpectedGuesses(B, S, sessionMethod, guessStrategy);
+
+  // Check if expectedGuesses is a BigInt
+  const expectedGuessesIsBigInt = typeof expectedGuesses === "bigint";
 
   // Update the displayed formula and result
   document.getElementById('expectedGuessesFormula').textContent = formula;
   document.getElementById('BValue').textContent = B;
-  document.getElementById('SValue').textContent = S;
+  document.getElementById('SValue').textContent = S.toString();
   document.getElementById('AValue').textContent = A ? A : 'N/A';
 
-  document.getElementById('expectedGuesses').textContent = `${expectedGuesses.toFixed(2)} guesses`;
+  document.getElementById('expectedGuesses').textContent = `${expectedGuessesIsBigInt ? expectedGuessesIsBigInt.toString() : expectedGuesses.toFixed(2)} guesses`;
 
   // Display both expected guesses and duration if A is provided
   if (A) {
-    const expectedDuration = expectedGuesses / A;
-    const humanizedDuration = humanizeDuration(expectedDuration * 1000, { round: true });
+    const expectedDuration = expectedGuessesIsBigInt ? expectedGuessesIsBigInt / BigInt(A) : expectedGuesses / A;
+    const humanizedDuration = humanizeDuration(Number(expectedDuration) * 1000, { round: true });
+
+    // Check if expectedDuration is a BigInt
+    const expectedDurationIsBigInt = typeof expectedDuration === "bigint";
 
     // Add a new line for expected duration formula
     const durationElementFormulaLine = document.getElementById('expectedDurationFormulaLine');
@@ -54,13 +88,12 @@ function updateExpectedGuesses() {
     // Add a new line for expected duration
     const durationElementLine = document.getElementById('expectedDurationLine');
     durationElementLine.style.display = 'block';
-    document.getElementById('expectedDuration').textContent = `${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
+    document.getElementById('expectedDuration').textContent = `${expectedDurationIsBigInt ? expectedDurationIsBigInt.toString() : expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
   } else {
     document.getElementById('expectedDurationFormulaLine').style.display = 'none';
     document.getElementById('expectedDurationLine').style.display = 'none';
   }
 }
-
 
 
 /**
@@ -96,38 +129,33 @@ function updateStrategyExplanations(sessionMethod, guessStrategy) {
 /**
  * Calculates the expected number of guesses based on the input parameters.
  * @param {number} B - The number of bits.
- * @param {number} S - The number of active sessions.
- * @param {number} A - The number of requests per second (optional).
- * @param {number} totalPossibleIds - The total number of possible session IDs.
+ * @param {BigInt} S - The number of active sessions.
  * @param {string} sessionMethod - The selected session method ('dynamic' or 'static').
  * @param {string} guessStrategy - The selected guessing strategy.
  * @returns {Object} - The expected guesses and the corresponding formula.
  */
-function calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, guessStrategy) {
+function calculateExpectedGuesses(B, S, sessionMethod, guessStrategy) {
   let expectedGuesses, formula;
 
-  if (sessionMethod === 'dynamic' || guessStrategy === 'random') {
-    formula = `2^B / S`;
-    expectedGuesses = totalPossibleIds / S;
-  } else {
-    formula = `(2^B + 1) / (S + 1)`;
-    expectedGuesses = (totalPossibleIds + 1) / (S + 1);
-  }
+  const totalPossibleIds = BigInt(2) ** BigInt(B); // Use BigInt for large B values
 
-  return { expectedGuesses, formula };
-}
-
-function calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, guessStrategy) {
-  let expectedGuesses, formula;
 
   if (sessionMethod === 'dynamic' || guessStrategy === 'random') {
     if (A) {
       formula = `2^B / (S * A)`;
-      expectedGuesses = totalPossibleIds / S;
     } else {
       formula = `2^B / S`;
-      expectedGuesses = totalPossibleIds / S;
     }
+
+    //Check if they are very large numbers that need special handling
+    if (totalPossibleIds > BigInt(Number.MAX_SAFE_INTEGER) || S > BigInt(Number.MAX_SAFE_INTEGER)) {
+      //They are large, so use the BigInt math
+      expectedGuesses = totalPossibleIds / S;
+    } else {
+      //They are small enough to do Number math
+      expectedGuesses = Number(totalPossibleIds) / Number(S);
+    }
+
   } else {
     if (A) {
       formula = `(2^B + 1) / ((S + 1) * A)`;
@@ -135,6 +163,15 @@ function calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, gues
     } else {
       formula = `(2^B + 1) / (S + 1)`;
       expectedGuesses = (totalPossibleIds + 1) / (S + 1);
+    }
+
+    //Check if they are very large numbers that need special handling
+    if (totalPossibleIds > BigInt(Number.MAX_SAFE_INTEGER) || S > BigInt(Number.MAX_SAFE_INTEGER)) {
+      //They are large, so use the BigInt math
+      expectedGuesses = (totalPossibleIds + BigInt(1)) / (S + BigInt(1));
+    } else {
+      //They are small enough to do Number math
+      expectedGuesses = (Number(totalPossibleIds) + 1) / (Number(S) + 1);
     }
   }
 

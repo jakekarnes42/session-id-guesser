@@ -118,3 +118,9 @@ h3 {
   /* light yellow for updated elements */
   transition: background-color 0.5s ease;
 }
+
+#error {
+  color: red;
+  font-weight: bold;
+  margin-top: 10px;
+}
