@@ -35,12 +35,22 @@ function updateExpectedGuesses() {
 
   // Update the displayed formula and result
   document.getElementById('formula').textContent = formula;
-  document.getElementById('expectedGuesses').textContent = formatExpectedGuesses(expectedGuesses, A);
   document.getElementById('BValue').textContent = B;
   document.getElementById('SValue').textContent = S;
   document.getElementById('AValue').textContent = A ? A : 'N/A';
-  document.getElementById('avgGuessesMeaning').textContent = expectedGuesses.toFixed(2);
+
+  // Display both expected guesses and duration if A is provided
+  if (A) {
+    const expectedDuration = expectedGuesses / A;
+    const humanizedDuration = humanizeDuration(expectedDuration * 1000, { round: true });
+    document.getElementById('expectedGuesses').innerHTML = `${expectedGuesses.toFixed(2)} guesses<br>(${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration})`;
+    document.getElementById('avgGuessesMeaning').innerHTML = `${expectedGuesses.toFixed(2)} guesses<br>(${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration})`;
+  } else {
+    document.getElementById('expectedGuesses').textContent = `${expectedGuesses.toFixed(2)} guesses`;
+    document.getElementById('avgGuessesMeaning').textContent = expectedGuesses.toFixed(2);
+  }
 }
+
 
 /**
  * Updates guessing strategy explanations based on the session method and strategy.
@@ -247,24 +257,31 @@ function updateProgress() {
 }
 
 function finalizeSimulation() {
-  console.log("finalizeSimulation");
   runningSimulation = false;
   document.getElementById('runSimulation').textContent = 'Run Simulation';
   document.getElementById('runSimulation').onclick = runSimulation;
 
-  // Calculate time if requests per second (A) is provided
+  // Calculate the average guesses
+  const avgGuesses = totalGuesses / completedTrials;
+  document.getElementById('avgGuesses').textContent = avgGuesses.toFixed(2);
+  document.getElementById('avgGuessesMeaning').textContent = avgGuesses.toFixed(2);
+
+  // If requests per second (A) is provided, calculate and display the average duration
   const A = document.getElementById('requests').value ? parseInt(document.getElementById('requests').value) : null;
   if (A) {
-    const avgGuesses = totalGuesses / completedTrials;
     const simTime = avgGuesses / A;
     const humanizedTime = humanizeDuration(simTime * 1000, { round: true });
+
     document.getElementById('simTime').textContent = `${simTime.toFixed(2)} seconds ≈ ${humanizedTime}`;
     document.getElementById('timeResults').style.display = 'block';
+
+    // Update the simulation results section to show both values
+    document.getElementById('avgGuesses').innerHTML = `${avgGuesses.toFixed(2)} guesses<br>(${simTime.toFixed(2)} seconds ≈ ${humanizedTime})`;
   }
 }
 
+
 function stopSimulation() {
-  console.log("stopSimulation");
   runningSimulation = false;
   workers.forEach(worker => worker.terminate()); // Terminate all active workers
   workers = []; // Clear the workers list
