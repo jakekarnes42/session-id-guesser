@@ -34,7 +34,7 @@ function updateExpectedGuesses() {
   const { expectedGuesses, formula } = calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, guessStrategy);
 
   // Update the displayed formula and result
-  document.getElementById('formula').textContent = formula;
+  document.getElementById('expectedGuessesFormula').textContent = formula;
   document.getElementById('BValue').textContent = B;
   document.getElementById('SValue').textContent = S;
   document.getElementById('AValue').textContent = A ? A : 'N/A';
@@ -46,14 +46,21 @@ function updateExpectedGuesses() {
     const expectedDuration = expectedGuesses / A;
     const humanizedDuration = humanizeDuration(expectedDuration * 1000, { round: true });
 
+    // Add a new line for expected duration formula
+    const durationElementFormulaLine = document.getElementById('expectedDurationFormulaLine');
+    durationElementFormulaLine.style.display = 'block';
+    document.getElementById('expectedDurationFormula').textContent = `Expected Guesses / A`;
+
     // Add a new line for expected duration
     const durationElementLine = document.getElementById('expectedDurationLine');
     durationElementLine.style.display = 'block';
     document.getElementById('expectedDuration').textContent = `${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
   } else {
+    document.getElementById('expectedDurationFormulaLine').style.display = 'none';
     document.getElementById('expectedDurationLine').style.display = 'none';
   }
 }
+
 
 
 /**
@@ -100,9 +107,23 @@ function calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, gues
   let expectedGuesses, formula;
 
   if (sessionMethod === 'dynamic' || guessStrategy === 'random') {
+    formula = `2^B / S`;
+    expectedGuesses = totalPossibleIds / S;
+  } else {
+    formula = `(2^B + 1) / (S + 1)`;
+    expectedGuesses = (totalPossibleIds + 1) / (S + 1);
+  }
+
+  return { expectedGuesses, formula };
+}
+
+function calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, guessStrategy) {
+  let expectedGuesses, formula;
+
+  if (sessionMethod === 'dynamic' || guessStrategy === 'random') {
     if (A) {
       formula = `2^B / (S * A)`;
-      expectedGuesses = totalPossibleIds / (S * A);
+      expectedGuesses = totalPossibleIds / S;
     } else {
       formula = `2^B / S`;
       expectedGuesses = totalPossibleIds / S;
@@ -110,7 +131,7 @@ function calculateExpectedGuesses(B, S, A, totalPossibleIds, sessionMethod, gues
   } else {
     if (A) {
       formula = `(2^B + 1) / ((S + 1) * A)`;
-      expectedGuesses = (totalPossibleIds + 1) / ((S + 1) * A);
+      expectedGuesses = (totalPossibleIds + 1) / (S + 1);
     } else {
       formula = `(2^B + 1) / (S + 1)`;
       expectedGuesses = (totalPossibleIds + 1) / (S + 1);
