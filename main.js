@@ -59,7 +59,7 @@ function updateExpectedGuesses() {
   updateStrategyExplanations(sessionMethod, guessStrategy);
 
   // Calculate expected guesses and update the formula
-  const { expectedGuesses, formula } = calculateExpectedGuesses(B, S, sessionMethod, guessStrategy);
+  const { expectedGuesses, formula } = calculateExpectedGuesses(B, S, A, sessionMethod, guessStrategy);
 
   // Check if expectedGuesses is a BigInt
   const expectedGuessesIsBigInt = typeof expectedGuesses === "bigint";
@@ -130,11 +130,12 @@ function updateStrategyExplanations(sessionMethod, guessStrategy) {
  * Calculates the expected number of guesses based on the input parameters.
  * @param {number} B - The number of bits.
  * @param {BigInt} S - The number of active sessions.
+ * @param {BigInt} A - The number of requests per second.
  * @param {string} sessionMethod - The selected session method ('dynamic' or 'static').
  * @param {string} guessStrategy - The selected guessing strategy.
  * @returns {Object} - The expected guesses and the corresponding formula.
  */
-function calculateExpectedGuesses(B, S, sessionMethod, guessStrategy) {
+function calculateExpectedGuesses(B, S, A, sessionMethod, guessStrategy) {
   let expectedGuesses, formula;
 
   const totalPossibleIds = BigInt(2) ** BigInt(B); // Use BigInt for large B values
