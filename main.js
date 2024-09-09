@@ -39,15 +39,19 @@ function updateExpectedGuesses() {
   document.getElementById('SValue').textContent = S;
   document.getElementById('AValue').textContent = A ? A : 'N/A';
 
+  document.getElementById('expectedGuesses').textContent = `${expectedGuesses.toFixed(2)} guesses`;
+
   // Display both expected guesses and duration if A is provided
   if (A) {
     const expectedDuration = expectedGuesses / A;
     const humanizedDuration = humanizeDuration(expectedDuration * 1000, { round: true });
-    document.getElementById('expectedGuesses').innerHTML = `${expectedGuesses.toFixed(2)} guesses<br>(${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration})`;
-    document.getElementById('avgGuessesMeaning').innerHTML = `${expectedGuesses.toFixed(2)} guesses<br>(${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration})`;
+
+    // Add a new line for expected duration
+    const durationElement = document.getElementById('expectedDuration');
+    durationElement.textContent = `Expected Duration: ${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
+    durationElement.style.display = 'block';
   } else {
-    document.getElementById('expectedGuesses').textContent = `${expectedGuesses.toFixed(2)} guesses`;
-    document.getElementById('avgGuessesMeaning').textContent = expectedGuesses.toFixed(2);
+    document.getElementById('expectedDuration').style.display = 'none';
   }
 }
 
@@ -254,6 +258,21 @@ function updateProgress() {
   const percentComplete = Math.floor((completedTrials / totalTrials) * 100);
   document.getElementById('progress').textContent = `${percentComplete}%`;
   document.getElementById('progressBarFill').style.width = `${percentComplete}%`;
+
+  // If requests per second (A) is provided, calculate and display the average duration
+  const A = document.getElementById('requests').value ? parseInt(document.getElementById('requests').value) : null;
+  if (A) {
+    const simTime = avgGuesses / A;
+    const humanizedTime = humanizeDuration(simTime * 1000, { round: true });
+
+    document.getElementById('simTime').textContent = `${simTime.toFixed(2)} seconds ≈ ${humanizedTime}`;
+    document.getElementById('timeResults').style.display = 'block';
+
+    // Update the simulation results section to show both values
+    document.getElementById('avgGuesses').innerHTML = `${avgGuesses.toFixed(2)} guesses<br>(${simTime.toFixed(2)} seconds ≈ ${humanizedTime})`;
+  } else {
+    document.getElementById('timeResults').style.display = 'none'; // Hide if A is not set
+  }
 }
 
 function finalizeSimulation() {
@@ -277,6 +296,8 @@ function finalizeSimulation() {
 
     // Update the simulation results section to show both values
     document.getElementById('avgGuesses').innerHTML = `${avgGuesses.toFixed(2)} guesses<br>(${simTime.toFixed(2)} seconds ≈ ${humanizedTime})`;
+  } else {
+    document.getElementById('timeResults').style.display = 'none'; // Hide if A is not set
   }
 }
 
