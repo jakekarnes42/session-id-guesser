@@ -47,11 +47,11 @@ function updateExpectedGuesses() {
     const humanizedDuration = humanizeDuration(expectedDuration * 1000, { round: true });
 
     // Add a new line for expected duration
-    const durationElement = document.getElementById('expectedDuration');
-    durationElement.textContent = `Expected Duration: ${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
-    durationElement.style.display = 'block';
+    const durationElementLine = document.getElementById('expectedDurationLine');
+    durationElementLine.style.display = 'block';
+    document.getElementById('expectedDuration').textContent = `${expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
   } else {
-    document.getElementById('expectedDuration').style.display = 'none';
+    document.getElementById('expectedDurationLine').style.display = 'none';
   }
 }
 

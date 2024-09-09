@@ -98,9 +98,9 @@
         <strong>Expected Guesses: </strong>
         <span id="expectedGuesses" class="expected-result">- guesses</span>
       </div>
-      <div class="formula-row" id="expectedDuration" style="display: none;">
+      <div class="formula-row" id="expectedDurationLine" style="display: none;">
         <strong>Expected Duration: </strong>
-        <span class="expected-result">-</span>
+        <span id="expectedDuration" class="expected-result">-</span>
       </div>
     </div>
   </div>
@@ -123,9 +123,11 @@
     <div id="results">
       <h3>Simulation Results:</h3>
       <p><strong>Average guesses until first success:</strong> <span id="avgGuesses">-</span></p>
-      <p><strong>Average duration until first success:</strong> <span id="simTime">-</span></p>
       <p><strong>What this means:</strong> With the current setup, an attacker would need to make <span
           id="avgGuessesMeaning">-</span> guesses on average to guess a valid session ID.</p>
+      <div id="timeResults">
+        <p><strong>Average duration until first success:</strong> <span id="simTime">-</span></p>
+      </div>
     </div>
   </div>
 
