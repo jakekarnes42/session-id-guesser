@@ -8,6 +8,20 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+
+#totalIds {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #27ae60;
+  background-color: #f9f9f9;
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+
 p {
   display: block;
   margin-bottom: 10px;
