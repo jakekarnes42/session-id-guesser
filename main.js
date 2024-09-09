@@ -70,11 +70,11 @@ function updateExpectedGuesses() {
   document.getElementById('SValue').textContent = S.toString();
   document.getElementById('AValue').textContent = A ? A : 'N/A';
 
-  document.getElementById('expectedGuesses').textContent = `${expectedGuessesIsBigInt ? expectedGuessesIsBigInt.toString() : expectedGuesses.toFixed(2)} guesses`;
+  document.getElementById('expectedGuesses').textContent = `${expectedGuessesIsBigInt ? expectedGuesses.toString() : expectedGuesses.toFixed(2)} guesses`;
 
   // Display both expected guesses and duration if A is provided
   if (A) {
-    const expectedDuration = expectedGuessesIsBigInt ? expectedGuessesIsBigInt / BigInt(A) : expectedGuesses / A;
+    const expectedDuration = expectedGuessesIsBigInt ? expectedGuesses / BigInt(A) : expectedGuesses / A;
     const humanizedDuration = humanizeDuration(Number(expectedDuration) * 1000, { round: true });
 
     // Check if expectedDuration is a BigInt
@@ -88,7 +88,7 @@ function updateExpectedGuesses() {
     // Add a new line for expected duration
     const durationElementLine = document.getElementById('expectedDurationLine');
     durationElementLine.style.display = 'block';
-    document.getElementById('expectedDuration').textContent = `${expectedDurationIsBigInt ? expectedDurationIsBigInt.toString() : expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
+    document.getElementById('expectedDuration').textContent = `${expectedDurationIsBigInt ? expectedDuration.toString() : expectedDuration.toFixed(2)} seconds ≈ ${humanizedDuration}`;
   } else {
     document.getElementById('expectedDurationFormulaLine').style.display = 'none';
     document.getElementById('expectedDurationLine').style.display = 'none';
