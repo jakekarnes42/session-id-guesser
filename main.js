@@ -160,10 +160,8 @@ function calculateExpectedGuesses(B, S, A, sessionMethod, guessStrategy) {
   } else {
     if (A) {
       formula = `(2^B + 1) / ((S + 1) * A)`;
-      expectedGuesses = (totalPossibleIds + 1) / (S + 1);
     } else {
       formula = `(2^B + 1) / (S + 1)`;
-      expectedGuesses = (totalPossibleIds + 1) / (S + 1);
     }
 
     //Check if they are very large numbers that need special handling
